@@ -49,10 +49,12 @@ when applied on the stack of the images, this model enables the virtual optical 
 
 
 the dataset could be found under this link, it contains two subsets: raw images from 15 stacks (each stack 20 slices) and its traditional segmented masks:
-https://drive.google.com/drive/folders/1PUIGUsVCqTShgS81sLbgqc4u5NdTtZY4?usp=sharing
 
 the original data form could also be found in /orignIMG:
 to give an example, this dataset only contains one stack of images. for more original stacks, please contact the author.
 
-some of the training weights are also available in this folder, we offer two sets of the weights with depth 256 channels and 512 channels.
+https://drive.google.com/drive/folders/1PUIGUsVCqTShgS81sLbgqc4u5NdTtZY4?usp=sharing
+
+some of the training weights are also available in this folder, we offer two sets of the weights with depth 256 channels and 512 channels:
+
 https://drive.google.com/drive/folders/1uA73P80NMypT3KOCk68oN3UIRpLaeL87?usp=sharing
