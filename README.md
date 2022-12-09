@@ -48,4 +48,4 @@ part of the segmentation results:
 in the axial direction, the segmented images reveal the 3D information of targets.
 <div align-center>
 <img src = "https://github.com/casus/deepfocus/blob/9cdc17b4717c6d59ddadc10f834082ec1d8056be/reports/UNet2D_vanilla/test2.gif">
-<div>
+</div>
