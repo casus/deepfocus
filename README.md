@@ -35,4 +35,15 @@ Project Organization
 
 --------
 
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
+the pipeline of the proejct works as below:
+![img](https://github.com/casus/deepfocus/blob/672ed2a76b50361f56e411a9e3e543c0bb11f82b/reports/UNet2D_vanilla/fig1.png)
+
+part of the results by segmentation are listed below:
+![img](https://github.com/casus/deepfocus/blob/672ed2a76b50361f56e411a9e3e543c0bb11f82b/reports/UNet2D_vanilla/fig4.png)
+
+when applied on the stack of the images, this model enables the virtual optical sectioning on widefiled microscopy. The segmented results reveal the 3D information of the targets.
+
+<div align=center>
+<img src="https://github.com/casus/deepfocus/blob/672ed2a76b50361f56e411a9e3e543c0bb11f82b/reports/UNet2D_vanilla/test2.gif">
+</div>
+
