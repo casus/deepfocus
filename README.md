@@ -37,4 +37,4 @@ Project Organization
 --------
 
 
-![img][reports/featureMap/autofocusing.svg](https://github.com/casus/deepfocus/blob/96590a07c8f2b454b8d1a107e632efec68b3749a/reports/featureMap/autofocusing.svg)
+![img][[reports/featureMap/autofocusing.svg](https://github.com/casus/deepfocus/blob/96590a07c8f2b454b8d1a107e632efec68b3749a/reports/featureMap/autofocusing.svg)](https://github.com/casus/deepfocus/blob/653c83b43a056cf764005375913cc5e7f852a2e9/reports/UNet2D_vanilla/fig1.png)
