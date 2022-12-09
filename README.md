@@ -36,5 +36,9 @@ Project Organization
 
 --------
 
+the working pipeline as below:
 
 ![img](https://github.com/casus/deepfocus/blob/653c83b43a056cf764005375913cc5e7f852a2e9/reports/UNet2D_vanilla/fig1.png)
+
+part of the segmentation results:
+![img](https://github.com/casus/deepfocus/blob/9cdc17b4717c6d59ddadc10f834082ec1d8056be/reports/UNet2D_vanilla/test2.gif)
