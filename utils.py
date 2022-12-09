@@ -46,7 +46,7 @@ class dataGenerator_transfer:
 
             while batch_start < L:
 
-                limit = min(batch_end, L) # 考虑最后一个batch分割不完整的情况
+                limit = min(batch_end, L) 
                 
                 X = self._load_img(self.img_dir, self.img_list[batch_start:limit])
                 X = np.stack([X,X,X], axis=-1)  # transfer learning requires 3 CH.
@@ -56,7 +56,7 @@ class dataGenerator_transfer:
 
                 yield(X,Y) # output the X and Y in batch size
 
-                batch_start += self.batch_size # 都往后挪一个batch
+                batch_start += self.batch_size 
                 batch_end += self.batch_size
                 
 
@@ -103,12 +103,12 @@ class dataGenerator_vanilla:
 
             while batch_start < L:
 
-                limit = min(batch_end, L) # 考虑最后一个batch分割不完整的情况
+                limit = min(batch_end, L) 
                 
                 X = self._load_img(self.img_dir, self.img_list[batch_start:limit])
                 Y = self._load_img(self.mask_dir, self.mask_list[batch_start:limit])
 
                 yield(X,Y) # output the X and Y in batch size
 
-                batch_start += self.batch_size # 都往后挪一个batch
+                batch_start += self.batch_size 
                 batch_end += self.batch_size

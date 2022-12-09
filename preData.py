@@ -43,11 +43,11 @@ def rescaleStack(imageStack, MIN, MAX):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data_dir', default = '/bigdata/casus/MLID/RuiLi/Data/LM/zebrafish_partial_15/', help='path to the data')
-    parser.add_argument('--intermediate_dir', default = './data/zebra15/preData', help='pre-processed data')
-    parser.add_argument('--inputData_dir', default = './data/zebra15/inputData/', help='input data dir for training')
+    parser.add_argument('--data_dir', default = '/raw/', help='path to the raw data')
+    parser.add_argument('--intermediate_dir', default = './data/interim/preData/', help='pre-processed data')
+    parser.add_argument('--inputData_dir', default = './data/processed/', help='input data dir for training')
 
-    parser.add_argument('--crop_pixels', default = 176, help='crop the image background')
+    parser.add_argument('--crop_pixels', default = 176, help='crop the image to resize')
     
     parser.add_argument('--rescale_img', default=[0, 255], help='rescale the gray images')
     parser.add_argument('--rescale_msk', default=[0, 255], help='rescale the mask')

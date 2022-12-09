@@ -1,8 +1,7 @@
-# deepfocus
+digitalConfocal
+==============================
 
-this project is for the in-focus pixels segmentation.
-
-using this model, we could segment the in-focus pixels in different focal planes. This enbales the virtual optical sectioning for wildefield microscopy.
+digital confocal microscopy
 
 Project Organization
 ------------
@@ -36,16 +35,4 @@ Project Organization
 
 --------
 
-the working pipeline as below:
-
-![img](https://github.com/casus/deepfocus/blob/653c83b43a056cf764005375913cc5e7f852a2e9/reports/UNet2D_vanilla/fig1.png)
-
-part of the segmentation results:
-
-![img](https://github.com/casus/deepfocus/blob/43766d3d1c0e32596579de8e4b9aeb549f89769c/reports/UNet2D_vanilla/fig4.png)
-
-
-in the axial direction, the segmented images reveal the 3D information of targets.
-<div align=center>
-<img src = "https://github.com/casus/deepfocus/blob/9cdc17b4717c6d59ddadc10f834082ec1d8056be/reports/UNet2D_vanilla/test2.gif">
-</div>
+<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

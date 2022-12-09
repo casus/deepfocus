@@ -7,7 +7,7 @@ def configuration():
     parser = argparse.ArgumentParser()
     
     # Dataset arguments
-    parser.add_argument('--data_path', type=str, default='/home/li52/code/LM/digitalConfocal/data/zebra15/inputData/', help='Dataset path')
+    parser.add_argument('--data_path', type=str, default='./data/interim/inputData/', help='Dataset path')  # input of the data
     parser.add_argument('--input_shape', type=int, default=[256, 256, 1], help='[W, H, CH]')
     
     parser.add_argument('--batch_size', type=int, default=16, help="Batch size")
@@ -18,8 +18,8 @@ def configuration():
     parser.add_argument('--epochs', type=int, default=500, help='Number of epochs')
     
     # training parameters
-    parser.add_argument('--tensorboard_path', type=str, default='/home/li52/code/LM/digitalConfocal/tensorboard/UNet2D/', help='tensorboard')
-    parser.add_argument('--model_path', type=str, default='/home/li52/code/LM/digitalConfocal/models_weight/', help='trained model')
+    parser.add_argument('--tensorboard_path', type=str, default='./tensorboard/UNet2D/', help='tensorboard')
+    parser.add_argument('--model_path', type=str, default='./models_weight/', help='trained model')
     
     args, unknown = parser.parse_known_args()
     

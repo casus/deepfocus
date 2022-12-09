@@ -102,8 +102,7 @@ target/
 .neptune/
 
 # all tensorboard
-digitalConfocal/notebooks/Unet/tensorBoard/*
-digitalConfocal/tensorboard/*
+/tensorboard
 
 # all models weight
 models_weight/
@@ -111,8 +110,5 @@ models_weight/
 # all data
 data/
 
-# certain file
-../transfer2D_256_1000.hdf5
-../simple2D_1024_1000.hdf5
 
 
