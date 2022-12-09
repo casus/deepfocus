@@ -35,3 +35,6 @@ Project Organization
 
 
 --------
+
+
+![img]reports/featureMap/autofocusing.svg
