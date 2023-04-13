@@ -1,4 +1,4 @@
-# train for 2D UNet. Vanilla version
+# fine tune for 2D UNet. Vanilla version
 # input: img[NUM, W, H]; msk[NUM, W, H]
 # output: predict [NUM, W, H, CH=1]
 
@@ -14,11 +14,25 @@ import config_vanilla
 
 import tensorflow.keras as K
 import segmentation_models as sm
-
-from models.simple2DUnet_256 import *
+from keras.models import load_model
+from keras_contrib.layers.normalization.instancenormalization import InstanceNormalization
 
 import neptune.new as neptune
 from neptune.new.integrations.tensorflow_keras import NeptuneCallback
+
+from models.simple2DUnet_256 import *
+
+# define custom loss function
+def custom_loss(y_true, y_pred):
+    BCE_loss = sm.losses.BinaryCELoss()(y_true, y_pred)
+    dice_loss = sm.losses.DiceLoss(class_weights=np.array([wt0, wt1]))(y_true, y_pred)
+    focal_loss = sm.losses.CategoricalFocalLoss()(y_true, y_pred)
+    total_loss = dice_loss*0.05 + (1* focal_loss) + BCE_loss*0.95
+    return total_loss
+
+def iou(y_true, y_pred):
+    return sm.metrics.IOUScore(threshold=0.2)(y_true, y_pred)
+
 
 def UNet(config):
     
@@ -29,63 +43,45 @@ def UNet(config):
     else:
         print('specify the optimizer.')
         
-    # loss
-    BCE_loss = sm.losses.BinaryCELoss()
-    dice_loss = sm.losses.DiceLoss()
-    focal_loss = sm.losses.CategoricalFocalLoss()
+    LR = 0.0001
+    optim = K.optimizers.Adam(LR)
+    wt0, wt1 = 1.26, 0.83
 
-    total_loss = dice_loss*1 + (1* focal_loss) + BCE_loss*0.005
+    # Load the model with custom loss function
+    MODEL_PATH = './models_weight/'
+    # SVAED_MODEL_NAME = MODEL_PATH + 'simple2D_512_update_first_noAug_' + str(EPOCHS) + '.hdf5'
+    SAVED_MODEL_NAME = MODEL_PATH + 'simple2D_512_update_first_noAug_func_1000.h5'
 
-    # metrics
-    metrics = ['accuracy', sm.metrics.IOUScore()]
+    my_model = load_model(SAVED_MODEL_NAME, compile=True, custom_objects={'InstanceNormalization':InstanceNormalization, 'custom_loss': custom_loss, 'iou':iou})
 
-    # compile the model
-    input_shape = (config.input_shape[0], config.input_shape[1], config.input_shape[2])
-    model = simple_unet_model(config.input_shape[0], config.input_shape[1], config.input_shape[2])
-    
-    model.compile(optimizer=optim, loss=total_loss, metrics=metrics)
+    return my_model
 
-    # print(model.summary)
-    print('input shape:', model.input_shape)
-    print('output shape:', model.output_shape)
-    
-    return model
-
-def train(config, aug):
+def finetune(config, aug):
     
     AUGMENT = aug
-    
-    # training
-    train_img_dir = config.data_path + 'train/images/'
-    train_msk_dir = config.data_path + 'train/masks/'
-    train_img_list = sorted(os.listdir(train_img_dir))  # ensure img and msk paired
-    train_msk_list = sorted(os.listdir(train_msk_dir))
 
-    # testing
-    test_img_dir = config.data_path + 'test/images/'
-    test_msk_dir = config.data_path + 'test/masks/'
-    test_img_list = sorted(os.listdir(test_img_dir))
-    test_msk_list = sorted(os.listdir(test_msk_dir))
+    # define the data path
 
-    # validation
-    val_img_dir = config.data_path + 'val/images/'
-    val_msk_dir = config.data_path + 'val/masks/'
-    val_img_list = sorted(os.listdir(val_img_dir))
-    val_msk_list = sorted(os.listdir(val_msk_dir))
+    DATA_PATH = config.data_path + '/finetune/'  
+
+    # tuneing
+    tune_img_dir = DATA_PATH + 'finetune/images/'
+    tune_msk_dir = DATA_PATH + 'finetune/m_masks/'
+    tune_img_list = sorted(os.listdir(tune_img_dir))  # ensure img and msk paired
+    tune_msk_list = sorted(os.listdir(tune_msk_dir))
     
     # generator
-    train_img_datagen = imageLoader(train_img_dir, train_img_list,
-                                   train_msk_dir, train_msk_list, config.batch_size, AUGMENT)
 
-    val_img_datagen = imageLoader(val_img_dir, val_img_list,
-                                 val_msk_dir, val_msk_list, config.batch_size, AUGMENT)
+    tune_gen_class = dataGenerator_vanilla(tune_img_dir, tune_img_list,
+                                   tune_msk_dir, tune_msk_list, config.batch_size, AUGMENT)
+
+    tune_img_datagen = tune_gen_class.imageLoader()
     
     
     # fetch model
     my_model = UNet(config)
     
-    # define the training params
-    ## define the neptune
+    # define the neptune
     if config.neptune_document:
 
         run = neptune.init(
@@ -129,16 +125,14 @@ def train(config, aug):
     
         
     # training
-    history = my_model.fit(train_img_datagen,
+    history = my_model.fit(tune_img_datagen,
                    steps_per_epoch=steps_per_epoch,
                    epochs=config.epochs,
-                   verbose=1, # ??
-                   validation_data=val_img_datagen,
-                   validation_steps=val_steps_per_epoch,
+                   verbose=1, 
                    callbacks=callbacks)
     
     # save model
-    SVAED_MODEL_NAME = config.model_path + 'simple2D_256' + '_' + str(config.epochs) + '.hdf5'
+    SVAED_MODEL_NAME = config.model_path + 'simple2D_256' + '_finetune' + str(config.epochs) + '.hdf5'
     my_model.save(SVAED_MODEL_NAME)
     
     if DOCUMENT:
@@ -151,12 +145,12 @@ def main():
 
     # train(c, device, list_A, list_B)
     aug = False  # decide the augmentation
-    train(c, aug)
+    finetune(c, aug)
     
-    print("finishing ...")
+    print("finishing tuning")
     
     
 if __name__ == '__main__':
     main()
 
-# python train.py --epochs 5 --neptune_document False --batch_size 2
+# python finetune_UNet2D_vanilla.py --epochs 5 --neptune_document False --batch_size 2

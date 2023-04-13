@@ -42,7 +42,7 @@ def imageLoader(img_dir, img_list, mask_dir, mask_list, batch_size):
         
         while batch_start < L:
             
-            limit = min(batch_end, L) # 考虑最后一个batch分割不完整的情况
+            limit = min(batch_end, L) 
             
             # X = load_img(img_list[batch_start:limit])
             # Y = load_img(mask_list[batch_start:limit])
@@ -52,5 +52,5 @@ def imageLoader(img_dir, img_list, mask_dir, mask_list, batch_size):
             
             yield(X,Y) # output the X and Y in batch size
             
-            batch_start += batch_size # 都往后挪一个batch
+            batch_start += batch_size 
             batch_end += batch_size
