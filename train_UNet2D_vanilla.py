@@ -4,18 +4,19 @@
 
 import os 
 import numpy as np
-from dataGenerator import imageLoader
 import keras
 import matplotlib.pyplot as plt
 import glob
 import random
-
 import config_vanilla
-
 import tensorflow.keras as K
 import segmentation_models as sm
-
-from models.simple2DUnet_256 import *
+from natsort import natsorted
+import tensorflow.keras as k
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.callbacks import EarlyStopping
+from models.simple2DUnet_512 import *
+from utils import *
 
 import neptune.new as neptune
 from neptune.new.integrations.tensorflow_keras import NeptuneCallback
@@ -56,30 +57,21 @@ def train(config, aug):
     AUGMENT = aug
     
     # training
-    train_img_dir = config.data_path + 'train/images/'
-    train_msk_dir = config.data_path + 'train/masks/'
-    train_img_list = sorted(os.listdir(train_img_dir))  # ensure img and msk paired
-    train_msk_list = sorted(os.listdir(train_msk_dir))
-
-    # testing
-    test_img_dir = config.data_path + 'test/images/'
-    test_msk_dir = config.data_path + 'test/masks/'
-    test_img_list = sorted(os.listdir(test_img_dir))
-    test_msk_list = sorted(os.listdir(test_msk_dir))
+    train_data_dir = config.data_path + 'train/'
+    train_data_list = natsorted(os.listdir(train_data_dir))  # ensure img and msk paired
 
     # validation
-    val_img_dir = config.data_path + 'val/images/'
-    val_msk_dir = config.data_path + 'val/masks/'
-    val_img_list = sorted(os.listdir(val_img_dir))
-    val_msk_list = sorted(os.listdir(val_msk_dir))
+    val_data_dir = config.data_path + 'val/'
+    val_data_list = natsorted(os.listdir(val_data_dir))  # ensure img and msk paired
     
     # generator
-    train_img_datagen = imageLoader(train_img_dir, train_img_list,
-                                   train_msk_dir, train_msk_list, config.batch_size, AUGMENT)
+    # tranining
+    train_gen_class = dataGenerator_allStack(train_data_dir, train_data_list,config.batch_size, augment=AUGMENT)
+    train_img_datagen = train_gen_class.imageLoader()
 
-    val_img_datagen = imageLoader(val_img_dir, val_img_list,
-                                 val_msk_dir, val_msk_list, config.batch_size, AUGMENT)
-    
+    # validation
+    val_gen_class = dataGenerator_allStack(val_data_dir, val_data_list,config.batch_size, augment=AUGMENT)
+    val_img_datagen = val_gen_class.imageLoader()
     
     # fetch model
     my_model = UNet(config)
@@ -107,54 +99,84 @@ def train(config, aug):
         run['hyper-parameters'] = PARAMS
         run["sys/tags"].add(["vanilla", "epochs:" + str(config.epochs)])
         
-    ## steps and epochs
-    steps_per_epoch = len(train_img_list) // config.batch_size
-    val_steps_per_epoch = len(val_img_list) // config.batch_size
+    # steps and epochs
+    train_data, val_data = np.load(train_data_dir + 'train_pretrain.npz'), np.load(val_data_dir + 'val_pretrain.npz')
+    train_msk_all, val_msk_all = train_data['mask'], val_data['mask']
 
-    # print('train steps/epoch', steps_per_epoch)
-    # print('val steps/epoch', steps_per_epoch)
+    steps_per_epoch = train_msk_all.shape[0] // config.batch_size
+    val_steps_per_epoch = val_msk_all.shape[0] // config.batch_size
+
+    # checkpoints
+    # set the checkpoint    
+    filepath = "./models_weight/checkPoints--{epoch:02d}-{val_iou:.2f}.h5"  
+    checkpoint_callback = ModelCheckpoint(filepath=filepath,monitor='val_iou',
+                                        save_freq='epoch',period=20)
+    early_stopping_callback = EarlyStopping(monitor='val_iou', patience=10)  # val_iou -> iou
 
     # call backs for documentation
     if config.neptune_document:
         callbacks = [
-            # k.callbacks.EarlyStopping(patience=15, monitor='val_loss'),
+            checkpoint_callback,
+            early_stopping_callback,
             neptune_cbk, 
             k.callbacks.TensorBoard(log_dir = config.tensorboard_path)  # save in new folder in hemera. Also update in neptune
         ]
     else:
         callbacks = [
-            # k.callbacks.EarlyStopping(patience=15, monitor='val_loss'),
+            early_stopping_callback,
+            checkpoint_callback,
             k.callbacks.TensorBoard(log_dir = config.tensorboard_path)  
         ]
     
+    patience = config.patience  # Number of epochs with no improvement
+    best_loss = float('inf')  # Initialize best validation loss
+    counter = 0  # Counter for epochs with no improvement
+    best_weights = None  # Variable to store the best weights
+
+    for step in range(config.epochs):
+        # Training step
+        img, msk = train_img_datagen.__next__()
+        img = img / 255  # Normalize image [0, 1]
         
-    # training
-    history = my_model.fit(train_img_datagen,
-                   steps_per_epoch=steps_per_epoch,
-                   epochs=config.epochs,
-                   verbose=1, # ??
-                   validation_data=val_img_datagen,
-                   validation_steps=val_steps_per_epoch,
-                   callbacks=callbacks)
+        loss = model.train_on_batch(img, msk.astype('float64'))  # Batch size = 1
+        
+        print("Training step:", step, "Loss:", loss[0], "iou:", loss[1])
+        
+        # Validation step
+        if step % 25 == 0:
+            val_img, val_msk = val_img_datagen.__next__()
+            val_img = val_img / 255  # Normalize validation image [0, 1]
+            
+            val_loss = model.test_on_batch(val_img, val_msk.astype('float64'))  # Batch size = 1
+            val_loss = np.asarray(val_loss)
+            
+            print("Validation step:", step, "Loss:", val_loss[0], "iou:", val_loss[1])
+            
+            # Check early stopping criteria
+            if val_loss[0] < best_loss:
+                best_loss = val_loss[0]
+                counter = 0
+                # Save the best weights
+                best_weights = model.get_weights()
+            else:
+                counter += 1
+            
+            if counter >= patience:
+                print("Early stopping triggered. Restoring best weights.")
+                model.save('./models_weight/' + 'best_model_' + str(step) + '.h5')
+                break
     
-    # save model
-    SVAED_MODEL_NAME = config.model_path + 'simple2D_256' + '_' + str(config.epochs) + '.hdf5'
-    my_model.save(SVAED_MODEL_NAME)
-    
-    if DOCUMENT:
+    if config.neptune_document:
         run.stop() 
         
 def main():
     
     c = config.configuration()
     print(c)
-
-    # train(c, device, list_A, list_B)
     aug = False  # decide the augmentation
     train(c, aug)
     
     print("finishing ...")
-    
     
 if __name__ == '__main__':
     main()

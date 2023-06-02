@@ -16,6 +16,7 @@ def configuration():
     
     parser.add_argument('--neptune_document', type=bool, default=True, help="neptune doc")
     parser.add_argument('--epochs', type=int, default=500, help='Number of epochs')
+    parser.add_argument('--patience', type=int, default=10, help='patience for early stopping')
     
     # training parameters
     parser.add_argument('--tensorboard_path', type=str, default='./tensorboard/UNet2D/', help='tensorboard')
